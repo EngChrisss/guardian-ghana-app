@@ -9,6 +9,8 @@ import base64
 import os
 from datetime import datetime
 
+ADMIN_PASSWORD = "M.P.139.23-24"
+
 # Page configuration
 st.set_page_config(
     page_title="Guardian Ghana - AI Water Protection",
@@ -59,6 +61,7 @@ from data.sample_data import generate_sample_data, get_water_quality_status
 from utils.map_helper import create_ghana_water_map, display_map, create_risk_overlay_map
 from utils.alert_system import check_and_alert, TelegramAlertSystem
 from utils.prediction_engine import predictor
+from utils.cloud_logger import cloud_logger  # NEW: Enhanced logging system
 
 # === PROFESSIONAL PASSWORD PROTECTION ===
 # Show login if not authenticated
@@ -112,7 +115,14 @@ if not st.session_state.authenticated:
                         st.session_state.access_time = dt.datetime.now()
                         st.session_state.failed_attempts = 0  # Reset on success
 
-                        # Log successful access (without password)
+                        # Log successful access with BOTH systems
+                        try:
+                            # NEW: Cloud logger (for web-based logging)
+                            cloud_logger.log_access(st.session_state.client_type, "login_success")
+                        except Exception as e:
+                            print(f"Note: Cloud logging unavailable - {e}")
+
+                        # Keep original file logging as backup
                         try:
                             with open("access_log.txt", "a", encoding="utf-8") as f:
                                 f.write(
@@ -222,7 +232,14 @@ if st.session_state.access_time:
 
 # Logout button
 if st.sidebar.button("🚪 Secure Logout", key="secure_logout"):
-    # Log logout
+    # Log logout with BOTH systems
+    try:
+        # NEW: Cloud logger
+        cloud_logger.log_access(st.session_state.client_type, "logout")
+    except Exception as e:
+        print(f"Note: Cloud logging unavailable - {e}")
+
+    # Keep original file logging as backup
     try:
         with open("access_log.txt", "a", encoding="utf-8") as f:
             f.write(f"{dt.datetime.now()}: {st.session_state.client_type.upper()} client logged out\n")
@@ -856,6 +873,7 @@ with col_left:
         if 'map_type_radio' in st.session_state:
             st.session_state.map_view = st.session_state.map_type_radio
 
+
     # SINGLE MAP DISPLAY - NO DUPLICATES
     try:
         if st.session_state.map_view == "AI Risk Prediction":
@@ -1035,8 +1053,29 @@ except Exception as e:
     st.error(f"Error displaying data: {str(e)}")
 
 # ======== ENHANCED ADMIN PANEL ========
-if st.session_state.get('admin_unlocked', False):
-    st.sidebar.markdown("---")
+# ======== ENHANCED ADMIN PANEL WITH PASSWORD ========
+st.sidebar.markdown("---")
+st.sidebar.header("🔧 System Administration")
+
+# Admin login section
+if not st.session_state.get('admin_unlocked', False):
+    st.sidebar.write("**Admin Access Required**")
+    admin_pass = st.sidebar.text_input("Admin Code:", type="password", key="admin_pass")
+
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        if st.sidebar.button("🔓 Unlock Admin", key="admin_unlock_btn", use_container_width=True):
+            if admin_pass == ADMIN_PASSWORD:
+                st.session_state.admin_unlocked = True
+                st.sidebar.success("✅ Admin access granted")
+                st.rerun()
+            else:
+                st.sidebar.error("❌ Invalid admin code")
+    with col2:
+        if st.sidebar.button("🔄 Clear", key="admin_clear_btn", use_container_width=True):
+            st.rerun()
+else:
+    # ADMIN IS UNLOCKED - SHOW ADMIN PANEL
     st.sidebar.success("✅ **SYSTEM ADMINISTRATOR**")
 
     admin_tab1, admin_tab2, admin_tab3, admin_tab4 = st.sidebar.tabs(
@@ -1077,7 +1116,7 @@ if st.session_state.get('admin_unlocked', False):
                         st.download_button(
                             "Download",
                             "".join(logs),
-                            file_name=f"access_logs_{dt.datetime.now().strftime('%Y%m%d')}.txt"  # FIXED: Changed datetime to dt.datetime
+                            file_name=f"access_logs_{dt.datetime.now().strftime('%Y%m%d')}.txt"
                         )
                 with col2:
                     if st.button("🔄 Refresh Logs"):
@@ -1086,6 +1125,51 @@ if st.session_state.get('admin_unlocked', False):
                 st.info("No access logs available")
         except Exception as e:
             st.error(f"Error reading logs: {e}")
+
+        # NEW: Cloud Access Analytics
+        st.write("---")
+        st.write("### 📊 Cloud Access Analytics")
+        st.info("Professional logging system for investor demonstrations")
+
+        # Show analytics summary
+        try:
+            analytics = cloud_logger.get_analytics_summary()
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Logins", analytics.get('total_logins', 0))
+            with col2:
+                st.metric("Unique Client Types", analytics.get('unique_client_types', 0))
+            with col3:
+                if analytics.get('last_login'):
+                    st.metric("Last Activity", analytics['last_login'][:10])
+
+            # Show client distribution
+            if 'client_types' in analytics and analytics['client_types']:
+                st.write("**Client Distribution:**")
+                for client_type, count in analytics['client_types'].items():
+                    if client_type == "government":
+                        st.success(f"🏛️ Government: {count} logins")
+                    elif client_type == "corporate":
+                        st.info(f"🏢 Corporate: {count} logins")
+                    elif client_type == "demo":
+                        st.warning(f"🎪 Demo/Trial: {count} logins")
+                    else:
+                        st.write(f"👤 {client_type}: {count}")
+
+            # Export cloud logs
+            log_json = cloud_logger.export_logs()
+            if st.button("📥 Download Cloud Logs (JSON)"):
+                st.download_button(
+                    label="Download Now",
+                    data=log_json,
+                    file_name=f"guardian_ghana_cloud_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json"
+                )
+
+        except Exception as e:
+            st.warning(f"Cloud analytics not available yet: {e}")
+            st.info("Cloud logging will become active after users log in")
 
     with admin_tab2:
         st.write("### User Management")
@@ -1324,7 +1408,6 @@ if st.sidebar.checkbox("💰 Show Revenue Projections", key="show_revenue"):
 
     st.caption(f"*Based on {revenue_data['assumptions']['market_size']} potential clients in Ghana*")
 
-
 # ======== ENTERPRISE PORTAL ========
 st.sidebar.markdown("---")
 st.sidebar.header("💼 Enterprise Portal")
@@ -1442,4 +1525,5 @@ if st.sidebar.checkbox("Show Business Dashboard", key="business_dashboard"):
         st.info("""
         **Ultimate Vision:** Become the "Operating System for Global Environmental Security"
         - Water Security → Air Quality → Soil Monitoring → Climate Risk → ESG Platform
+
         """)
