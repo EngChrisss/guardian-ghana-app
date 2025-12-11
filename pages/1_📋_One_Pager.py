@@ -204,17 +204,17 @@ with col2:
         st.markdown('<div class="one-pager-section">', unsafe_allow_html=True)
         st.markdown("## 🗺️ Roadmap")
         st.markdown("""
-        **2025 - Ghana Dominance:**
+        **2026 - Ghana Dominance:**
         - EPA national deployment
         - 100+ enterprise clients
         - ₵12.5M+ revenue
 
-        **2025 - West Africa Expansion:**
+        **2028 - West Africa Expansion:**
         - Nigeria, Ivory Coast, Senegal
         - ₵62.5M+ revenue
         - 50+ team members
 
-        **2026 - Africa Platform:**
+        **2030 - Africa Platform:**
         - 10+ African countries
         - ₵250M+ revenue
         - Series B funding
@@ -314,3 +314,4 @@ def get_pdf_content():
 if st.button("📥 Download One-Pager as PDF"):
 
     st.success("PDF generated! (In production, this would download)")
+
