@@ -229,13 +229,13 @@ with st.container():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("**You**")
+        st.markdown("**CHRIS DELA YAO, AGBEKE**")
         st.markdown("CEO & Vision")
         st.markdown("*AI + Environmental Tech*")
 
     with col2:
         st.markdown("**AI Co-pilot**")
-        st.markdown("CTO & Development")
+        st.markdown("Development")
         st.markdown("*Full-stack + ML Engineering*")
 
     with col3:
@@ -312,4 +312,5 @@ def get_pdf_content():
 
 
 if st.button("📥 Download One-Pager as PDF"):
+
     st.success("PDF generated! (In production, this would download)")
