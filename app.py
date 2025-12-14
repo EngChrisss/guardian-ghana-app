@@ -247,13 +247,6 @@ if not st.session_state.authenticated:
     """)
 
     st.caption(f"System Time: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} • v2.5.1")
-    
-    # CEO hint in sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.caption("👑 CEO/Admin: GUARDIAN2025")
-    st.sidebar.caption("⛏️ Mining: MINING2024")
-    st.sidebar.caption("🏛️ Government: EPA2024")
-    st.sidebar.caption("🎪 Demo: DEMO2024")
 
     st.stop()
 
@@ -1672,3 +1665,4 @@ if st.sidebar.checkbox("Show Business Dashboard", key="business_dashboard"):
         **Ultimate Vision:** Become the "Operating System for Global Environmental Security"
         - Water Security → Air Quality → Soil Monitoring → Climate Risk → ESG Platform
         """)
+
