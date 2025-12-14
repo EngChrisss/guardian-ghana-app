@@ -111,7 +111,7 @@ if not st.session_state.authenticated:
                 if st.button("Login", type="primary", key="login_btn"):
                     # === ENHANCED SECURE PASSWORD VALIDATION ===
                     valid_passwords = {
-                        "GUARDIAN2025": "super_admin",      # YOU - CEO
+                        "M.P.139.23-24": "super_admin",      # YOU - CEO
                         "EPA2024": "government_full",       # Government full
                         "WRC2024": "government_basic",      # Government basic
                         "MINING2024": "mining_corporate",   # Mining companies
@@ -128,7 +128,7 @@ if not st.session_state.authenticated:
                         st.session_state.failed_attempts = 0  # Reset on success
 
                         # SET SPECIFIC CLIENT PRIVILEGES
-                        if password_input == "GUARDIAN2025":
+                        if password_input == "M.P.139.23-24":
                             # CEO/SUPER ADMIN
                             st.session_state.show_mining_portal = True
                             st.session_state.show_epa_tools = True
@@ -170,7 +170,7 @@ if not st.session_state.authenticated:
                             pass
 
                         # Special CEO logging
-                        if password_input == "GUARDIAN2025":
+                        if password_input == "M.P.139.23-24":
                             print(f"🚀 CEO LOGIN: {dt.datetime.now()}")
                             try:
                                 with open("ceo_access_log.txt", "a", encoding="utf-8") as f:
@@ -1665,4 +1665,5 @@ if st.sidebar.checkbox("Show Business Dashboard", key="business_dashboard"):
         **Ultimate Vision:** Become the "Operating System for Global Environmental Security"
         - Water Security → Air Quality → Soil Monitoring → Climate Risk → ESG Platform
         """)
+
 
