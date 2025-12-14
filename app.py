@@ -108,31 +108,48 @@ if not st.session_state.authenticated:
                         "DEMO2024": "trial"
                     }
 
+                    # === SECURE PASSWORD VALIDATION ===
                     if password_input in valid_passwords:
-                        # Successful login
+                        # SUCCESSFUL LOGIN
                         st.session_state.authenticated = True
                         st.session_state.client_type = valid_passwords[password_input]
                         st.session_state.access_time = dt.datetime.now()
                         st.session_state.failed_attempts = 0  # Reset on success
 
-                        # Log successful access with BOTH systems
-                        try:
-                            # NEW: Cloud logger (for web-based logging)
-                            cloud_logger.log_access(st.session_state.client_type, "login_success")
-                        except Exception as e:
-                            print(f"Note: Cloud logging unavailable - {e}")
+                        # SET SPECIFIC CLIENT PRIVILEGES
+                        if password_input == "MINING2024":
+                            st.session_state.show_mining_portal = True
+                            st.session_state.access_level = "mining_corporate"
+                        elif password_input == "EPA2024":
+                            st.session_state.show_epa_tools = True
+                            st.session_state.access_level = "government_full"
+                        elif password_input == "WRC2024":
+                            st.session_state.show_epa_tools = True
+                            st.session_state.access_level = "government_basic"
+                        elif password_input == "CORPORATE2024":  # NEW
+                            st.session_state.show_mining_portal = False
+                            st.session_state.access_level = "corporate_basic"
+                        elif password_input in ["GUEST2024", "DEMO2024"]:
+                            st.session_state.show_mining_portal = False
+                            st.session_state.access_level = "demo_limited"
 
-                        # Keep original file logging as backup
+                        # Log successful access
+                        try:
+                            cloud_logger.log_access(st.session_state.client_type, "login_success")
+                        except:
+                            pass
+
+                        # File logging backup
                         try:
                             with open("access_log.txt", "a", encoding="utf-8") as f:
                                 f.write(
-                                    f"{dt.datetime.now()}: {st.session_state.client_type.upper()} client logged in\n")
+                                    f"{dt.datetime.now()}: {st.session_state.client_type.upper()} logged in ({password_input})\n")
                         except:
                             pass
 
                         st.rerun()
                     else:
-                        # Failed attempt
+                        # FAILED ATTEMPT
                         st.session_state.failed_attempts += 1
                         st.error("❌ Invalid access code")
 
@@ -166,7 +183,7 @@ if not st.session_state.authenticated:
         st.info("""
         **Government & Regulatory Bodies:**
         • Environmental Protection Agency
-        • Water Resources Commission  
+        • Water Resources Commission
         • Minerals Commission
         • Ghana Water Company
         """)
@@ -197,6 +214,11 @@ if not st.session_state.authenticated:
 # ======== MAIN APPLICATION (AFTER AUTHENTICATION) ========
 # Show client info in sidebar
 st.sidebar.markdown("---")
+if st.session_state.get('show_mining_portal', False):
+    st.sidebar.markdown("---")
+    if st.sidebar.button("⛏️ Mining Operations Portal", key="mining_portal_button",
+                        help="Exclusive portal for mining company clients"):
+        st.switch_page("pages/6_Mining_Portal.py")
 if st.session_state.client_type == "government":
     st.sidebar.success(f"✅ GOVERNMENT ACCESS")
     st.sidebar.info("Full monitoring & enforcement privileges")
@@ -916,7 +938,7 @@ with col_left:
         display_map(fallback_map)
 
     st.caption("""
-    **Map Legend:**  
+    **Map Legend:**
     🟥 **Red** = Critical/High Risk | 🟨 **Yellow/Orange** = Warning/Medium Risk | 🟩 **Green** = Normal/Low Risk
     """)
 
@@ -1269,8 +1291,7 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("""
-**About This Project**: Guardian Ghana uses AI and real-time monitoring to protect Ghana's water resources from illegal mining pollution. 
-Built with Python, Streamlit, Folium, and Machine Learning.
+**About This Project**: Guardian Ghana uses AI and real-time monitoring to protect Ghana's water resources from illegal mining pollution.
 """)
 
 # ======== FORCE AUTO-REFRESH ========
