@@ -25,6 +25,16 @@ if "authenticated" not in st.session_state:
     st.session_state.access_time = None
     st.session_state.failed_attempts = 0  # INITIALIZE HERE
 
+# Initialize new session state variables for security features
+if "show_mining_portal" not in st.session_state:
+    st.session_state.show_mining_portal = False
+if "show_epa_tools" not in st.session_state:
+    st.session_state.show_epa_tools = False
+if "access_level" not in st.session_state:
+    st.session_state.access_level = ""
+if "is_ceo" not in st.session_state:
+    st.session_state.is_ceo = False
+
 if "live_mode" not in st.session_state:
     st.session_state.live_mode = False
 if "last_refresh_time" not in st.session_state:
@@ -99,16 +109,17 @@ if not st.session_state.authenticated:
 
             with col_btn1:
                 if st.button("Login", type="primary", key="login_btn"):
-                    # Password validation (secured)
+                    # === ENHANCED SECURE PASSWORD VALIDATION ===
                     valid_passwords = {
-                        "EPA2024": "government",
-                        "WRC2024": "government",
-                        "MINING2024": "corporate",
-                        "GUEST2024": "demo",
-                        "DEMO2024": "trial"
+                        "GUARDIAN2025": "super_admin",      # YOU - CEO
+                        "EPA2024": "government_full",       # Government full
+                        "WRC2024": "government_basic",      # Government basic
+                        "MINING2024": "mining_corporate",   # Mining companies
+                        "CORPORATE2024": "corporate_basic", # Corporate basic
+                        "DEMO2024": "demo_limited",         # Demo/Trial
+                        "GUEST2024": "demo_limited"         # Guest access
                     }
 
-                    # === SECURE PASSWORD VALIDATION ===
                     if password_input in valid_passwords:
                         # SUCCESSFUL LOGIN
                         st.session_state.authenticated = True
@@ -117,27 +128,55 @@ if not st.session_state.authenticated:
                         st.session_state.failed_attempts = 0  # Reset on success
 
                         # SET SPECIFIC CLIENT PRIVILEGES
-                        if password_input == "MINING2024":
+                        if password_input == "GUARDIAN2025":
+                            # CEO/SUPER ADMIN
+                            st.session_state.show_mining_portal = True
+                            st.session_state.show_epa_tools = True
+                            st.session_state.admin_unlocked = True  # Auto-unlock admin
+                            st.session_state.access_level = "super_admin"
+                            st.session_state.is_ceo = True  # New flag for CEO features
+                            
+                        elif password_input == "MINING2024":
+                            # Mining Corporate
                             st.session_state.show_mining_portal = True
                             st.session_state.access_level = "mining_corporate"
+                            st.session_state.client_type = "corporate"  # Set for compatibility
+                            
                         elif password_input == "EPA2024":
+                            # Government Full
                             st.session_state.show_epa_tools = True
                             st.session_state.access_level = "government_full"
+                            st.session_state.client_type = "government"
+                            
                         elif password_input == "WRC2024":
+                            # Government Basic
                             st.session_state.show_epa_tools = True
                             st.session_state.access_level = "government_basic"
-                        elif password_input == "CORPORATE2024":  # NEW
-                            st.session_state.show_mining_portal = False
+                            st.session_state.client_type = "government"
+                            
+                        elif password_input == "CORPORATE2024":
+                            # Corporate Basic
                             st.session_state.access_level = "corporate_basic"
-                        elif password_input in ["GUEST2024", "DEMO2024"]:
-                            st.session_state.show_mining_portal = False
+                            st.session_state.client_type = "corporate"
+                            
+                        else:  # DEMO2024 or GUEST2024
                             st.session_state.access_level = "demo_limited"
+                            st.session_state.client_type = "demo"
 
                         # Log successful access
                         try:
                             cloud_logger.log_access(st.session_state.client_type, "login_success")
                         except:
                             pass
+
+                        # Special CEO logging
+                        if password_input == "GUARDIAN2025":
+                            print(f"🚀 CEO LOGIN: {dt.datetime.now()}")
+                            try:
+                                with open("ceo_access_log.txt", "a", encoding="utf-8") as f:
+                                    f.write(f"{dt.datetime.now()}: CEO LOGIN - SUPER ADMIN ACTIVATED\n")
+                            except:
+                                pass
 
                         # File logging backup
                         try:
@@ -183,7 +222,7 @@ if not st.session_state.authenticated:
         st.info("""
         **Government & Regulatory Bodies:**
         • Environmental Protection Agency
-        • Water Resources Commission
+        • Water Resources Commission  
         • Minerals Commission
         • Ghana Water Company
         """)
@@ -208,25 +247,45 @@ if not st.session_state.authenticated:
     """)
 
     st.caption(f"System Time: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} • v2.5.1")
+    
+    # CEO hint in sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.caption("👑 CEO/Admin: GUARDIAN2025")
+    st.sidebar.caption("⛏️ Mining: MINING2024")
+    st.sidebar.caption("🏛️ Government: EPA2024")
+    st.sidebar.caption("🎪 Demo: DEMO2024")
 
     st.stop()
 
 # ======== MAIN APPLICATION (AFTER AUTHENTICATION) ========
 # Show client info in sidebar
 st.sidebar.markdown("---")
+
+# === SECURE MINING PORTAL ACCESS ===
+# ONLY show for mining clients and CEO
 if st.session_state.get('show_mining_portal', False):
-    st.sidebar.markdown("---")
     if st.sidebar.button("⛏️ Mining Operations Portal", key="mining_portal_button",
                         help="Exclusive portal for mining company clients"):
         st.switch_page("pages/6_Mining_Portal.py")
-if st.session_state.client_type == "government":
-    st.sidebar.success(f"✅ GOVERNMENT ACCESS")
+
+# Display access level
+if st.session_state.access_level == "super_admin":
+    st.sidebar.success("👑 SUPER ADMIN ACCESS")
+    st.sidebar.info("Full system privileges")
+elif st.session_state.access_level == "mining_corporate":
+    st.sidebar.success(f"✅ MINING CORPORATE ACCESS")
+    st.sidebar.info("Exclusive mining portal access")
+elif st.session_state.access_level == "government_full":
+    st.sidebar.success(f"✅ GOVERNMENT FULL ACCESS")
     st.sidebar.info("Full monitoring & enforcement privileges")
-elif st.session_state.client_type == "corporate":
-    st.sidebar.success(f"✅ CORPORATE ACCESS")
-    st.sidebar.info("Compliance monitoring & risk assessment")
-elif st.session_state.client_type == "demo":
-    st.sidebar.warning(f"⚠️ DEMO ACCESS")
+elif st.session_state.access_level == "government_basic":
+    st.sidebar.success(f"✅ GOVERNMENT BASIC ACCESS")
+    st.sidebar.info("Basic monitoring access")
+elif st.session_state.access_level == "corporate_basic":
+    st.sidebar.success(f"✅ CORPORATE BASIC ACCESS")
+    st.sidebar.info("Basic compliance monitoring")
+elif st.session_state.access_level == "demo_limited":
+    st.sidebar.warning(f"⚠️ DEMO/TRIAL ACCESS")
     st.sidebar.info("Limited functionality • 7-day trial")
 else:
     st.sidebar.success(f"✅ AUTHORIZED ACCESS")
@@ -709,8 +768,6 @@ if st.session_state.get('live_mode', False):
         refresh_status = "Imminent" if time_to_next_update <= 5 else "Scheduled"
         st.metric("🕐 Next Refresh", f"{time_to_next_update}s", delta=refresh_status)
 
-    # PROFESSIONAL REFRESH INDICATOR
-
     # CRITICAL ALERTS PANEL (Only show when there are actual alerts)
     critical_rivers = df[df['status'] == "🔴 Critical"]
     if not critical_rivers.empty:
@@ -845,7 +902,7 @@ if st.sidebar.button("🧪 Run Accuracy Test", key="run_validation"):
 if 'validation_results' in st.session_state:
     results = st.session_state.validation_results
     st.sidebar.markdown("### 📈 Validation Results")
-    col1, col2 = st.sidebar.columns(2)
+    col1, col2 = st.columns(2)
     with col1:
         st.metric("🎯 Accuracy", results['accuracy'])
     with col2:
@@ -1074,10 +1131,14 @@ try:
 except Exception as e:
     st.error(f"Error displaying data: {str(e)}")
 
-# ======== ENHANCED ADMIN PANEL ========
-# ======== ENHANCED ADMIN PANEL WITH PASSWORD ========
+# ======== ENHANCED ADMIN PANEL WITH CEO FEATURES ========
 st.sidebar.markdown("---")
 st.sidebar.header("🔧 System Administration")
+
+# If CEO, auto-unlock admin
+if st.session_state.get('is_ceo', False) and not st.session_state.get('admin_unlocked', False):
+    st.session_state.admin_unlocked = True
+    st.sidebar.success("👑 CEO ACCESS GRANTED")
 
 # Admin login section
 if not st.session_state.get('admin_unlocked', False):
@@ -1098,13 +1159,71 @@ if not st.session_state.get('admin_unlocked', False):
             st.rerun()
 else:
     # ADMIN IS UNLOCKED - SHOW ADMIN PANEL
-    st.sidebar.success("✅ **SYSTEM ADMINISTRATOR**")
-
-    admin_tab1, admin_tab2, admin_tab3, admin_tab4 = st.sidebar.tabs(
-        ["📊 Analytics", "👥 Users", "⚙️ System", "🔒 Security"]
-    )
-
-    with admin_tab1:
+    if st.session_state.get('is_ceo', False):
+        st.sidebar.success("👑 **SUPER ADMINISTRATOR**")
+        
+        # Create tabs including CEO tab
+        admin_tab1, admin_tab2, admin_tab3, admin_tab4, admin_tab5 = st.sidebar.tabs(
+            ["👑 CEO", "📊 Analytics", "👥 Users", "⚙️ System", "🔒 Security"]
+        )
+    else:
+        st.sidebar.success("✅ **SYSTEM ADMINISTRATOR**")
+        
+        # Create tabs without CEO tab for non-CEO admins
+        admin_tab1, admin_tab2, admin_tab3, admin_tab4 = st.sidebar.tabs(
+            ["📊 Analytics", "👥 Users", "⚙️ System", "🔒 Security"]
+        )
+    
+    # CEO TAB (only for CEO)
+    if st.session_state.get('is_ceo', False):
+        with admin_tab1:
+            st.success("## 👑 GUARDIAN GHANA - CEO DASHBOARD")
+            
+            # Real-time business metrics
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("🚀 MRR Target", "₵625,000", "₵62,500 current")
+            with col2:
+                st.metric("🎯 Pilot Clients", "3", "Gold Fields, EPA, Newmont")
+            with col3:
+                st.metric("📈 Valuation", "₵312.5M", "Pre-money")
+            
+            # Quick Actions
+            st.write("### ⚡ Quick Actions")
+            if st.button("📧 Send Investor Update"):
+                st.info("Investor update template loaded")
+            
+            if st.button("📊 Update Revenue Projections"):
+                st.info("Opening revenue calculator...")
+            
+            if st.button("👥 Add New Client"):
+                new_client = st.text_input("Client Name:")
+                if st.button("Generate Client Password"):
+                    import random
+                    st.success(f"Password for {new_client}: CLIENT_{random.randint(1000,9999)}")
+            
+            # Client Pipeline
+            st.write("### 🎯 Active Pipeline")
+            pipeline = [
+                {"client": "Gold Fields", "stage": "Demo Call", "value": "₵187,500/mo", "next": "12/13"},
+                {"client": "Ghana EPA", "stage": "Proposal Review", "value": "₵625,000/mo", "next": "12/15"},
+                {"client": "Newmont", "stage": "Initial Contact", "value": "₵187,500/mo", "next": "12/16"},
+            ]
+            
+            for deal in pipeline:
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                with col1:
+                    st.write(f"**{deal['client']}**")
+                with col2:
+                    st.write(deal['stage'])
+                with col3:
+                    st.write(deal['value'])
+                with col4:
+                    if st.button("→", key=f"action_{deal['client']}"):
+                        st.session_state.selected_client = deal['client']
+    
+    # ANALYTICS TAB (for all admins)
+    with admin_tab2 if st.session_state.get('is_ceo', False) else admin_tab1:
         st.write("### System Analytics")
 
         # Real-time metrics
@@ -1148,7 +1267,7 @@ else:
         except Exception as e:
             st.error(f"Error reading logs: {e}")
 
-        # NEW: Cloud Access Analytics
+        # Cloud Access Analytics
         st.write("---")
         st.write("### 📊 Cloud Access Analytics")
         st.info("Professional logging system for investor demonstrations")
@@ -1193,7 +1312,8 @@ else:
             st.warning(f"Cloud analytics not available yet: {e}")
             st.info("Cloud logging will become active after users log in")
 
-    with admin_tab2:
+    # USERS TAB
+    with admin_tab3 if st.session_state.get('is_ceo', False) else admin_tab2:
         st.write("### User Management")
 
         # Simulated user database
@@ -1221,7 +1341,8 @@ else:
         if st.button("Create User"):
             st.success(f"Invitation sent to {new_email}")
 
-    with admin_tab3:
+    # SYSTEM TAB
+    with admin_tab4 if st.session_state.get('is_ceo', False) else admin_tab3:
         st.write("### System Configuration")
 
         # AI Model Settings
@@ -1242,7 +1363,8 @@ else:
         if st.button("💾 Save Configuration"):
             st.success("Configuration saved!")
 
-    with admin_tab4:
+    # SECURITY TAB
+    with admin_tab5 if st.session_state.get('is_ceo', False) else admin_tab4:
         st.write("### Security Dashboard")
 
         # Security status
@@ -1292,6 +1414,7 @@ else:
 st.markdown("---")
 st.markdown("""
 **About This Project**: Guardian Ghana uses AI and real-time monitoring to protect Ghana's water resources from illegal mining pollution.
+Built with Python, Streamlit, Folium, and Machine Learning.
 """)
 
 # ======== FORCE AUTO-REFRESH ========
@@ -1304,112 +1427,114 @@ if st.session_state.get('live_mode', False):
     time.sleep(0.1)
 
 # ======== EPA DEMO FEATURES ========
-st.sidebar.markdown("---")
-st.sidebar.header("🏛️ EPA Demo Features")
+# Only show EPA features for government clients or CEO
+if st.session_state.get('show_epa_tools', False) or st.session_state.get('is_ceo', False):
+    st.sidebar.markdown("---")
+    st.sidebar.header("🏛️ EPA Demo Features")
 
-# Government dashboard view
-if st.sidebar.checkbox("🏛️ Show Government Dashboard", key="gov_dashboard"):
-    st.sidebar.markdown("### Agency Tools")
+    # Government dashboard view
+    if st.sidebar.checkbox("🏛️ Show Government Dashboard", key="gov_dashboard"):
+        st.sidebar.markdown("### Agency Tools")
 
-    # Compliance reporting
-    if st.sidebar.button("📋 Generate Compliance Report", key="compliance_report"):
-        with st.spinner("Generating EPA compliance report..."):
-            time.sleep(2)
+        # Compliance reporting
+        if st.sidebar.button("📋 Generate Compliance Report", key="compliance_report"):
+            with st.spinner("Generating EPA compliance report..."):
+                time.sleep(2)
 
-            # Generate comprehensive report
-            report_data = {
-                "date": dt.datetime.now().strftime("%Y-%m-%d"),
-                "critical_violations": critical_count,
-                "high_risk_predictions": high_risk_count if 'predictions' in st.session_state else 0,
-                "rivers_monitored": len(df),
-                "ai_accuracy": st.session_state.get('validation_results', {}).get('accuracy', '87%')
-            }
+                # Generate comprehensive report
+                report_data = {
+                    "date": dt.datetime.now().strftime("%Y-%m-%d"),
+                    "critical_violations": critical_count,
+                    "high_risk_predictions": high_risk_count if 'predictions' in st.session_state else 0,
+                    "rivers_monitored": len(df),
+                    "ai_accuracy": st.session_state.get('validation_results', {}).get('accuracy', '87%')
+                }
 
-            # Show report in main area
-            st.success("✅ Compliance Report Generated!")
-            with st.expander("📄 **EPA Compliance Report**", expanded=True):
-                st.write(f"**Report Date:** {report_data['date']}")
-                st.write(f"**Critical Violations Detected:** {report_data['critical_violations']}")
-                st.write(f"**High-Risk Predictions:** {report_data['high_risk_predictions']}")
-                st.write(f"**Rivers Monitored:** {report_data['rivers_monitored']}")
-                st.write(f"**AI Model Accuracy:** {report_data['ai_accuracy']}")
+                # Show report in main area
+                st.success("✅ Compliance Report Generated!")
+                with st.expander("📄 **EPA Compliance Report**", expanded=True):
+                    st.write(f"**Report Date:** {report_data['date']}")
+                    st.write(f"**Critical Violations Detected:** {report_data['critical_violations']}")
+                    st.write(f"**High-Risk Predictions:** {report_data['high_risk_predictions']}")
+                    st.write(f"**Rivers Monitored:** {report_data['rivers_monitored']}")
+                    st.write(f"**AI Model Accuracy:** {report_data['ai_accuracy']}")
 
-                # Action items
-                st.markdown("### 🎯 Recommended Actions")
-                if report_data['critical_violations'] > 0:
-                    st.error("1. **Immediate Investigation** required for critical rivers")
-                if report_data['high_risk_predictions'] > 0:
-                    st.warning("2. **Preventive Measures** needed for high-risk areas")
+                    # Action items
+                    st.markdown("### 🎯 Recommended Actions")
+                    if report_data['critical_violations'] > 0:
+                        st.error("1. **Immediate Investigation** required for critical rivers")
+                    if report_data['high_risk_predictions'] > 0:
+                        st.warning("2. **Preventive Measures** needed for high-risk areas")
 
-                st.info("3. **Monthly Report** scheduled for submission")
+                    st.info("3. **Monthly Report** scheduled for submission")
 
-    # Enforcement tools
-    if st.sidebar.button("⚖️ Show Enforcement Module", key="enforcement_module"):
-        st.info("### 🏛️ EPA Enforcement Dashboard")
-        col1, col2 = st.columns(2)
+        # Enforcement tools
+        if st.sidebar.button("⚖️ Show Enforcement Module", key="enforcement_module"):
+            st.info("### 🏛️ EPA Enforcement Dashboard")
+            col1, col2 = st.columns(2)
 
-        with col1:
-            st.subheader("Active Violations")
-            violations = df[df['status'] == "🔴 Critical"]
-            for _, river in violations.iterrows():
-                st.error(f"**{river['river_name']}** - Violating EPA Standards")
-                st.write(f"• Turbidity: {river['turbidity_ntu']} NTU (Limit: 100 NTU)")
-                st.write(f"• pH: {river['ph']:.1f} (Range: 6.0-8.5)")
-                st.write("---")
+            with col1:
+                st.subheader("Active Violations")
+                violations = df[df['status'] == "🔴 Critical"]
+                for _, river in violations.iterrows():
+                    st.error(f"**{river['river_name']}** - Violating EPA Standards")
+                    st.write(f"• Turbidity: {river['turbidity_ntu']} NTU (Limit: 100 NTU)")
+                    st.write(f"• pH: {river['ph']:.1f} (Range: 6.0-8.5)")
+                    st.write("---")
 
-        with col2:
-            st.subheader("Enforcement Actions")
-            action_options = ["Warning Notice", "Fine Assessment", "Cease & Desist", "Criminal Referral"]
-            selected_action = st.selectbox("Select Action:", action_options)
-            if st.button("📝 Generate Enforcement Order"):
-                st.success(f"✅ {selected_action} order generated for review")
+            with col2:
+                st.subheader("Enforcement Actions")
+                action_options = ["Warning Notice", "Fine Assessment", "Cease & Desist", "Criminal Referral"]
+                selected_action = st.selectbox("Select Action:", action_options)
+                if st.button("📝 Generate Enforcement Order"):
+                    st.success(f"✅ {selected_action} order generated for review")
 
-    # Historical data analysis
-    if st.sidebar.button("📊 Trend Analysis", key="trend_analysis"):
-        st.info("### 📈 Long-term Water Quality Trends")
+        # Historical data analysis
+        if st.sidebar.button("📊 Trend Analysis", key="trend_analysis"):
+            st.info("### 📈 Long-term Water Quality Trends")
 
-        # Simulate historical data
-        dates = pd.date_range(end=dt.datetime.now(), periods=30, freq='D')
-        trend_data = pd.DataFrame({
-            'Date': dates,
-            'Pra River Turbidity': np.random.randint(80, 400, 30),
-            'Ankobra River pH': np.random.uniform(5.2, 7.0, 30),
-            'Birim River DO': np.random.uniform(2.0, 8.0, 30)
-        })
+            # Simulate historical data
+            dates = pd.date_range(end=dt.datetime.now(), periods=30, freq='D')
+            trend_data = pd.DataFrame({
+                'Date': dates,
+                'Pra River Turbidity': np.random.randint(80, 400, 30),
+                'Ankobra River pH': np.random.uniform(5.2, 7.0, 30),
+                'Birim River DO': np.random.uniform(2.0, 8.0, 30)
+            })
 
-        st.line_chart(trend_data.set_index('Date'))
-        st.caption("30-day water quality trends for major rivers")
+            st.line_chart(trend_data.set_index('Date'))
+            st.caption("30-day water quality trends for major rivers")
 
-# ======== EPA SUCCESS METRICS ========
-st.sidebar.markdown("---")
-st.sidebar.header("📊 EPA Success Metrics")
+    # ======== EPA SUCCESS METRICS ========
+    st.sidebar.markdown("---")
+    st.sidebar.header("📊 EPA Success Metrics")
 
-if st.sidebar.checkbox("Show Impact Analysis", key="impact_analysis"):
-    st.info("### 📈 Potential EPA Impact with Guardian Ghana")
+    if st.sidebar.checkbox("Show Impact Analysis", key="impact_analysis"):
+        st.info("### 📈 Potential EPA Impact with Guardian Ghana")
 
-    metrics = {
-        "Response Time Improvement": {"current": "7-14 days", "with_us": "2-4 hours", "impact": "98% faster"},
-        "Detection Accuracy": {"current": "60-70%", "with_us": "87%+", "impact": "25% improvement"},
-        "Annual Cost": {"current": "₵28.8M", "with_us": "₵6.25M", "impact": "78% savings"},
-        "Coverage": {"current": "40 rivers", "with_us": "200+ rivers", "impact": "5x more coverage"}
-    }
+        metrics = {
+            "Response Time Improvement": {"current": "7-14 days", "with_us": "2-4 hours", "impact": "98% faster"},
+            "Detection Accuracy": {"current": "60-70%", "with_us": "87%+", "impact": "25% improvement"},
+            "Annual Cost": {"current": "₵28.8M", "with_us": "₵6.25M", "impact": "78% savings"},
+            "Coverage": {"current": "40 rivers", "with_us": "200+ rivers", "impact": "5x more coverage"}
+        }
 
-    for metric, data in metrics.items():
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(f"Current {metric}", data["current"])
-        with col2:
-            st.metric(f"With Guardian Ghana", data["with_us"])
-        with col3:
-            st.metric("Improvement", data["impact"])
+        for metric, data in metrics.items():
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(f"Current {metric}", data["current"])
+            with col2:
+                st.metric(f"With Guardian Ghana", data["with_us"])
+            with col3:
+                st.metric("Improvement", data["impact"])
 
-    st.success("""
-    **Total Annual Benefit to Ghana:**
-    - **₵22.5M cost savings**
-    - **300+ pollution events prevented**
-    - **2M+ people protected**
-    - **5,000+ jobs created** (monitoring, enforcement, remediation)
-    """)
+        st.success("""
+        **Total Annual Benefit to Ghana:**
+        - **₵22.5M cost savings**
+        - **300+ pollution events prevented**
+        - **2M+ people protected**
+        - **5,000+ jobs created** (monitoring, enforcement, remediation)
+        """)
 
 # ======== REVENUE PROJECTIONS ========
 if st.sidebar.checkbox("💰 Show Revenue Projections", key="show_revenue"):
@@ -1546,5 +1671,4 @@ if st.sidebar.checkbox("Show Business Dashboard", key="business_dashboard"):
         st.info("""
         **Ultimate Vision:** Become the "Operating System for Global Environmental Security"
         - Water Security → Air Quality → Soil Monitoring → Climate Risk → ESG Platform
-
         """)
