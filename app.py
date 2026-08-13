@@ -111,13 +111,13 @@ if not st.session_state.authenticated:
                 if st.button("Login", type="primary", key="login_btn"):
                     # === ENHANCED SECURE PASSWORD VALIDATION ===
                     valid_passwords = {
-                        "M.P.139.23-24": "super_admin",      # YOU - CEO
-                        "EPA2024": "government_full",       # Government full
-                        "WRC2024": "government_basic",      # Government basic
-                        "MINING2024": "mining_corporate",   # Mining companies
-                        "CORPORATE2024": "corporate_basic", # Corporate basic
-                        "DEMO2024": "demo_limited",         # Demo/Trial
-                        "GUEST2024": "demo_limited"         # Guest access
+                        "M.P.139.23-24": "super_admin",  # YOU - CEO
+                        "EPA2024": "government_full",  # Government full
+                        "WRC2024": "government_basic",  # Government basic
+                        "MINING2024": "mining_corporate",  # Mining companies
+                        "CORPORATE2024": "corporate_basic",  # Corporate basic
+                        "DEMO2024": "demo_limited",  # Demo/Trial
+                        "GUEST2024": "demo_limited"  # Guest access
                     }
 
                     if password_input in valid_passwords:
@@ -128,37 +128,37 @@ if not st.session_state.authenticated:
                         st.session_state.failed_attempts = 0  # Reset on success
 
                         # SET SPECIFIC CLIENT PRIVILEGES
-                        if password_input == "M.P.139.23-24":
+                        if password_input == "GUARDIAN2025":
                             # CEO/SUPER ADMIN
                             st.session_state.show_mining_portal = True
                             st.session_state.show_epa_tools = True
                             st.session_state.admin_unlocked = True  # Auto-unlock admin
                             st.session_state.access_level = "super_admin"
                             st.session_state.is_ceo = True  # New flag for CEO features
-                            
+
                         elif password_input == "MINING2024":
                             # Mining Corporate
                             st.session_state.show_mining_portal = True
                             st.session_state.access_level = "mining_corporate"
                             st.session_state.client_type = "corporate"  # Set for compatibility
-                            
+
                         elif password_input == "EPA2024":
                             # Government Full
                             st.session_state.show_epa_tools = True
                             st.session_state.access_level = "government_full"
                             st.session_state.client_type = "government"
-                            
+
                         elif password_input == "WRC2024":
                             # Government Basic
                             st.session_state.show_epa_tools = True
                             st.session_state.access_level = "government_basic"
                             st.session_state.client_type = "government"
-                            
+
                         elif password_input == "CORPORATE2024":
                             # Corporate Basic
                             st.session_state.access_level = "corporate_basic"
                             st.session_state.client_type = "corporate"
-                            
+
                         else:  # DEMO2024 or GUEST2024
                             st.session_state.access_level = "demo_limited"
                             st.session_state.client_type = "demo"
@@ -170,7 +170,7 @@ if not st.session_state.authenticated:
                             pass
 
                         # Special CEO logging
-                        if password_input == "M.P.139.23-24":
+                        if password_input == "GUARDIAN2025":
                             print(f"🚀 CEO LOGIN: {dt.datetime.now()}")
                             try:
                                 with open("ceo_access_log.txt", "a", encoding="utf-8") as f:
@@ -258,7 +258,7 @@ st.sidebar.markdown("---")
 # ONLY show for mining clients and CEO
 if st.session_state.get('show_mining_portal', False):
     if st.sidebar.button("⛏️ Mining Operations Portal", key="mining_portal_button",
-                        help="Exclusive portal for mining company clients"):
+                         help="Exclusive portal for mining company clients"):
         st.switch_page("pages/6_Mining_Portal.py")
 
 # Display access level
@@ -699,7 +699,7 @@ st.sidebar.download_button(
 # ======== PROFESSIONAL DASHBOARD LAYOUT ========
 st.markdown("---")
 col_left, col_right = st.columns([2, 1])
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
     critical_count = len(df[df['status'] == "🔴 Critical"])
@@ -730,6 +730,50 @@ with col5:
         st.metric("🎯 AI Accuracy", accuracy, delta="Validated")
     else:
         st.metric("🎯 AI Accuracy", "87%", delta="Baseline")
+
+with col6:
+    try:
+        from rainfall_service import get_live_rainfall
+
+        live_rain = get_live_rainfall()
+
+        # Debug output
+        print(f"Rainfall status: {live_rain['status']}")
+
+        # Handle all status types
+        if live_rain['status'] == 'live':
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta="LIVE"
+            )
+        elif live_rain['status'] == 'delayed':
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta="DELAYED"
+            )
+        elif live_rain['status'] == 'historical':
+            # This is REAL NASA data, just not from today
+            date_str = live_rain['data']['date'].strftime('%b %Y')
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta=f"NASA ({date_str})"
+            )
+        else:
+            st.metric(
+                label="🌧️ Rainfall",
+                value="No Data",
+                delta="NASA GPM"
+            )
+    except Exception as e:
+        st.metric(
+            label="🌧️ Rainfall",
+            value="Error",
+            delta="Check logs"
+        )
+        print(f"❌ Rainfall error: {e}")
 
 # ======== PROFESSIONAL LIVE MODE STATUS ========
 st.markdown("---")
@@ -1154,24 +1198,24 @@ else:
     # ADMIN IS UNLOCKED - SHOW ADMIN PANEL
     if st.session_state.get('is_ceo', False):
         st.sidebar.success("👑 **SUPER ADMINISTRATOR**")
-        
+
         # Create tabs including CEO tab
         admin_tab1, admin_tab2, admin_tab3, admin_tab4, admin_tab5 = st.sidebar.tabs(
             ["👑 CEO", "📊 Analytics", "👥 Users", "⚙️ System", "🔒 Security"]
         )
     else:
         st.sidebar.success("✅ **SYSTEM ADMINISTRATOR**")
-        
+
         # Create tabs without CEO tab for non-CEO admins
         admin_tab1, admin_tab2, admin_tab3, admin_tab4 = st.sidebar.tabs(
             ["📊 Analytics", "👥 Users", "⚙️ System", "🔒 Security"]
         )
-    
+
     # CEO TAB (only for CEO)
     if st.session_state.get('is_ceo', False):
         with admin_tab1:
             st.success("## 👑 GUARDIAN GHANA - CEO DASHBOARD")
-            
+
             # Real-time business metrics
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -1180,21 +1224,22 @@ else:
                 st.metric("🎯 Pilot Clients", "3", "Gold Fields, EPA, Newmont")
             with col3:
                 st.metric("📈 Valuation", "₵312.5M", "Pre-money")
-            
+
             # Quick Actions
             st.write("### ⚡ Quick Actions")
             if st.button("📧 Send Investor Update"):
                 st.info("Investor update template loaded")
-            
+
             if st.button("📊 Update Revenue Projections"):
                 st.info("Opening revenue calculator...")
-            
+
             if st.button("👥 Add New Client"):
                 new_client = st.text_input("Client Name:")
                 if st.button("Generate Client Password"):
                     import random
-                    st.success(f"Password for {new_client}: CLIENT_{random.randint(1000,9999)}")
-            
+
+                    st.success(f"Password for {new_client}: CLIENT_{random.randint(1000, 9999)}")
+
             # Client Pipeline
             st.write("### 🎯 Active Pipeline")
             pipeline = [
@@ -1202,7 +1247,7 @@ else:
                 {"client": "Ghana EPA", "stage": "Proposal Review", "value": "₵625,000/mo", "next": "12/15"},
                 {"client": "Newmont", "stage": "Initial Contact", "value": "₵187,500/mo", "next": "12/16"},
             ]
-            
+
             for deal in pipeline:
                 col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
                 with col1:
@@ -1214,7 +1259,7 @@ else:
                 with col4:
                     if st.button("→", key=f"action_{deal['client']}"):
                         st.session_state.selected_client = deal['client']
-    
+
     # ANALYTICS TAB (for all admins)
     with admin_tab2 if st.session_state.get('is_ceo', False) else admin_tab1:
         st.write("### System Analytics")
@@ -1665,5 +1710,3 @@ if st.sidebar.checkbox("Show Business Dashboard", key="business_dashboard"):
         **Ultimate Vision:** Become the "Operating System for Global Environmental Security"
         - Water Security → Air Quality → Soil Monitoring → Climate Risk → ESG Platform
         """)
-
-
