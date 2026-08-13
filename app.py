@@ -170,7 +170,7 @@ if not st.session_state.authenticated:
                         st.session_state.failed_attempts = 0  # Reset on success
 
                         # SET SPECIFIC CLIENT PRIVILEGES
-                        if password_input == "GUARDIAN2025":
+                        if password_input == "M.P.139.23-24":
                             # CEO/SUPER ADMIN
                             st.session_state.show_mining_portal = True
                             st.session_state.show_epa_tools = True
