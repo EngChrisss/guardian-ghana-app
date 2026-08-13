@@ -1,0 +1,19 @@
+# SECRETS - NEVER UPLOAD
+secrets.toml
+*.toml
+
+# PRIVATE PAGES
+private_pages/
+
+# LOGS
+access_log.txt
+security_log.txt
+
+# PYTHON
+__pycache__/
+*.pyc
+*.pyo
+
+# SYSTEM
+.DS_Store
+Thumbs.db
