@@ -9,6 +9,48 @@ import base64
 import os
 from datetime import datetime
 
+# ============================================
+# NASA GPM DATA AUTO-DOWNLOAD (Cloud/First Run)
+# ============================================
+import gpm
+import glob
+
+def ensure_rainfall_data_exists():
+    """Download sample rainfall data if none exists (runs once on cloud)"""
+    # Check if we already have data
+    data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
+    files = glob.glob(f"{data_path}*.HDF5")
+    
+    if files:
+        print(f"✅ Data already exists: {len(files)} files found")
+        return True
+    
+    # Try to download
+    try:
+        print("📡 No data found. Downloading sample NASA GPM data...")
+        print("   (This runs only once on first startup)")
+        
+        gpm.download(
+            product="IMERG-FR",
+            product_type="RS",
+            version=7,
+            start_time=datetime(2025, 9, 1, 0, 0, 0),
+            end_time=datetime(2025, 9, 1, 23, 59, 59),
+            storage="GES_DISC"
+        )
+        
+        print("✅ Sample data downloaded successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"⚠️ Could not download data: {e}")
+        print("   Dashboard will show 'No Data' until data is available.")
+        return False
+
+# Run the check
+ensure_rainfall_data_exists()
+# ============================================
+
 ADMIN_PASSWORD = "M.P.139.23-24"
 
 # Page configuration
