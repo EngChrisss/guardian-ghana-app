@@ -732,32 +732,48 @@ with col5:
         st.metric("🎯 AI Accuracy", "87%", delta="Baseline")
 
 with col6:
-    # Get rainfall data safely
     try:
         from rainfall_service import get_live_rainfall
 
         live_rain = get_live_rainfall()
-    except:
-        live_rain = {'status': 'unavailable', 'message': 'Service not available', 'data': None}
 
-    if live_rain['status'] == 'live':
+        # Debug output
+        print(f"Rainfall status: {live_rain['status']}")
+
+        # Handle all status types
+        if live_rain['status'] == 'live':
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta="LIVE"
+            )
+        elif live_rain['status'] == 'delayed':
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta="DELAYED"
+            )
+        elif live_rain['status'] == 'historical':
+            # This is REAL NASA data, just not from today
+            date_str = live_rain['data']['date'].strftime('%b %Y')
+            st.metric(
+                label="🌧️ Rainfall",
+                value=f"{live_rain['data']['total_mm']:.1f} mm",
+                delta=f"NASA ({date_str})"
+            )
+        else:
+            st.metric(
+                label="🌧️ Rainfall",
+                value="No Data",
+                delta="NASA GPM"
+            )
+    except Exception as e:
         st.metric(
             label="🌧️ Rainfall",
-            value=f"{live_rain['data']['total_mm']:.1f} mm",
-            delta="NASA GPM LIVE"
+            value="Error",
+            delta="Check logs"
         )
-    elif live_rain['status'] == 'delayed':
-        st.metric(
-            label="🌧️ Rainfall",
-            value=f"{live_rain['data']['total_mm']:.1f} mm",
-            delta="⏳ Delayed"
-        )
-    else:
-        st.metric(
-            label="🌧️ Rainfall",
-            value="No Data",
-            delta="NASA GPM"
-        )
+        print(f"❌ Rainfall error: {e}")
 
 # ======== PROFESSIONAL LIVE MODE STATUS ========
 st.markdown("---")

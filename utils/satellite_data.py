@@ -40,7 +40,7 @@ def get_weather_data(latitude, longitude):
         confidence = "medium"
         data_source = "NASA GPM (IMERG-FR)"
 
-    elif live_rainfall['status'] == 'demo':
+    elif live_rainfall['status'] == 'historical':
         # DEMO DATA (latest available from NASA)
         data = live_rainfall['data']
         rainfall_mm = data['avg_mm_per_hr']

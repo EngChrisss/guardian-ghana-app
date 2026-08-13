@@ -118,7 +118,7 @@ def get_live_rainfall():
 
     if data:
         return {
-            'status': 'demo',
+            'status': 'historical',
             'data': data,
             'message': f"Demo data: {fallback_date} (NASA GPM)"
         }
