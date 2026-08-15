@@ -49,6 +49,24 @@ def ensure_rainfall_data_exists():
 
 # Run the check
 ensure_rainfall_data_exists()
+
+# Add this debug code right after ensure_rainfall_data_exists()
+print("=" * 60)
+print("🔍 DEBUG: Checking data availability")
+print("=" * 60)
+
+import glob
+# Check what data actually exists
+for year in [2024, 2025]:
+    for month in [1, 6, 9]:
+        path = f"./data/GPM/RS/V07/IMERG/IMERG-FR/{year}/{month:02d}/01/*.HDF5"
+        files = glob.glob(path)
+        if files:
+            print(f"✅ FOUND: {year}-{month:02d}-01: {len(files)} files")
+        else:
+            print(f"❌ MISSING: {year}-{month:02d}-01")
+
+print("=" * 60)
 # ============================================
 
 ADMIN_PASSWORD = "M.P.139.23-24"
