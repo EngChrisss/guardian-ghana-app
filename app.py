@@ -14,59 +14,63 @@ from datetime import datetime
 # ============================================
 import gpm
 import glob
+import sys
 
 def ensure_rainfall_data_exists():
     """Download sample rainfall data if none exists (runs once on cloud)"""
-    # Check if we already have data
+    # Data path
     data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
-    files = glob.glob(f"{data_path}*.HDF5")
     
+    # Check if data already exists
+    files = glob.glob(f"{data_path}*.HDF5")
     if files:
         print(f"✅ Data already exists: {len(files)} files found")
         return True
     
-    # Try to download
-    try:
-        print("📡 No data found. Downloading sample NASA GPM data...")
-        print("   (This runs only once on first startup)")
-        
-        gpm.download(
-            product="IMERG-FR",
-            product_type="RS",
-            version=7,
-            start_time=datetime(2025, 9, 1, 0, 0, 0),
-            end_time=datetime(2025, 9, 1, 23, 59, 59),
-            storage="GES_DISC"
-        )
-        
-        print("✅ Sample data downloaded successfully!")
-        return True
-        
-    except Exception as e:
-        print(f"⚠️ Could not download data: {e}")
-        print("   Dashboard will show 'No Data' until data is available.")
-        return False
+    print("=" * 60)
+    print("📡 No NASA GPM data found. Attempting download...")
+    print("=" * 60)
+    
+    # Try up to 3 times
+    for attempt in range(3):
+        try:
+            print(f"\n   Attempt {attempt + 1}/3...")
+            
+            # Download the data
+            gpm.download(
+                product="IMERG-FR",
+                product_type="RS",
+                version=7,
+                start_time=datetime(2025, 9, 1, 0, 0, 0),
+                end_time=datetime(2025, 9, 1, 23, 59, 59),
+                storage="GES_DISC"
+            )
+            
+            # Verify download
+            files = glob.glob(f"{data_path}*.HDF5")
+            if files:
+                print(f"   ✅ Download successful! {len(files)} files downloaded.")
+                print("=" * 60)
+                return True
+            else:
+                print(f"   ⚠️ Download completed but no files found.")
+                
+        except Exception as e:
+            print(f"   ❌ Attempt {attempt + 1} failed: {str(e)[:100]}...")
+            
+        # Wait before retry (except on last attempt)
+        if attempt < 2:
+            print("   ⏳ Waiting 10 seconds before retry...")
+            time.sleep(10)
+    
+    print("\n❌ All download attempts failed.")
+    print("   Dashboard will show 'No Data' until data is available.")
+    print("   You can manually upload data to GitHub to fix this.")
+    print("=" * 60)
+    return False
 
-# Run the check
-ensure_rainfall_data_exists()
-
-# Add this debug code right after ensure_rainfall_data_exists()
-print("=" * 60)
-print("🔍 DEBUG: Checking data availability")
-print("=" * 60)
-
-import glob
-# Check what data actually exists
-for year in [2024, 2025]:
-    for month in [1, 6, 9]:
-        path = f"./data/GPM/RS/V07/IMERG/IMERG-FR/{year}/{month:02d}/01/*.HDF5"
-        files = glob.glob(path)
-        if files:
-            print(f"✅ FOUND: {year}-{month:02d}-01: {len(files)} files")
-        else:
-            print(f"❌ MISSING: {year}-{month:02d}-01")
-
-print("=" * 60)
+# Run the data check
+data_available = ensure_rainfall_data_exists()
 # ============================================
 
 ADMIN_PASSWORD = "M.P.139.23-24"
@@ -83,7 +87,10 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
     st.session_state.client_type = ""
     st.session_state.access_time = None
-    st.session_state.failed_attempts = 0  # INITIALIZE HERE
+    st.session_state.failed_attempts = 0
+
+# ... REST OF YOUR APP CODE CONTINUES HERE ...
+# (Keep everything else the same - your existing imports, login, metrics, etc.)
 
 # Initialize new session state variables for security features
 if "show_mining_portal" not in st.session_state:
