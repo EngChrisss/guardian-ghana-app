@@ -9,6 +9,18 @@ import glob
 from datetime import datetime, timedelta
 import gpm
 
+# ============================================
+# SAFE IMPORTS FOR CLOUD DEPLOYMENT
+# ============================================
+try:
+    import xarray as xr
+    import netCDF4
+    HAS_DATA_LIBS = True
+    print("✅ xarray/netCDF4 loaded successfully")
+except ImportError:
+    HAS_DATA_LIBS = False
+    print("⚠️ xarray/netCDF4 not available - using pre-downloaded data")
+# ============================================
 # Constants
 ANKOBRA_LAT_MIN = 5.0
 ANKOBRA_LAT_MAX = 5.8
