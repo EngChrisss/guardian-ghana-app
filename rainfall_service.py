@@ -31,25 +31,19 @@ DATA_DIR = "./data/GPM/RS/V07/IMERG/IMERG-FR/"
 
 
 def get_ankobra_rainfall(date):
-    """
-    Get rainfall data for Ankobra Basin for a given date.
-
-    Args:
-        date: datetime.date or datetime.datetime
-
-    Returns:
-        dict with 'time', 'rainfall_mm_per_hr', 'total_mm', 'max_rain'
-        Returns None if no data found
-    """
+    # If xarray isn't available, return None (data won't be read)
+    if not HAS_DATA_LIBS:
+        return None
+    
     date_str = date.strftime("%Y/%m/%d")
     file_pattern = f"{DATA_DIR}{date_str}/*.HDF5"
     files = sorted(glob.glob(file_pattern))
-
+    
     if not files:
         return None
-
+    
     results = []
-
+    
     for file in files:
         try:
             ds = xr.open_dataset(file, group='Grid')
