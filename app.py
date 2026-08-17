@@ -8,7 +8,7 @@ import random
 import base64
 import os
 from datetime import datetime
-
+from utils.data_manager import data_manager
 # ============================================
 # NASA GPM DATA AUTO-DOWNLOAD (Cloud/First Run)
 # ============================================
@@ -71,6 +71,42 @@ def ensure_rainfall_data_exists():
 
 # Run the data check
 data_available = ensure_rainfall_data_exists()
+# ============================================
+
+# Run the data check
+data_available = ensure_rainfall_data_exists()
+# ============================================
+
+# ============================================
+# CHECK FOR NEW NASA DATA (Auto-Download)
+# ============================================
+def check_for_new_data():
+    """Check if new NASA data is available and download it"""
+    try:
+        from utils.data_manager import data_manager
+        from datetime import timedelta
+        
+        most_recent_local = data_manager.get_most_recent_local_date()
+        most_recent_available = data_manager.get_most_recent_available_date()
+        
+        if most_recent_local and most_recent_available:
+            if most_recent_available > most_recent_local:
+                print(f"📡 New data available! ({most_recent_local} → {most_recent_available})")
+                data_manager.download_missing_data(
+                    start_date=most_recent_local + timedelta(days=1),
+                    end_date=most_recent_available
+                )
+            else:
+                print(f"✅ Data is up to date ({most_recent_local})")
+        else:
+            print("📡 Checking for initial data...")
+            data_manager.download_missing_data()
+            
+    except Exception as e:
+        print(f"⚠️ Data check error: {e}")
+
+# Run the check
+check_for_new_data()
 # ============================================
 
 ADMIN_PASSWORD = "M.P.139.23-24"
