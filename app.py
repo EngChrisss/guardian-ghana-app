@@ -842,6 +842,18 @@ with col6:
         )
         print(f"❌ Rainfall error: {e}")
 
+# Add rainfall chart section
+st.markdown("---")
+st.subheader("📊 Rainfall Trend — Ankobra Basin")
+
+try:
+    from rainfall_chart import display_rainfall_chart
+    display_rainfall_chart()
+except ImportError:
+    st.warning("Rainfall chart module not available")
+except Exception as e:
+    st.error(f"Error loading rainfall chart: {e}")
+
 # ======== PROFESSIONAL LIVE MODE STATUS ========
 st.markdown("---")
 
