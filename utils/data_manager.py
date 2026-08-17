@@ -2,7 +2,16 @@
 Data Manager — Guardian Ghana
 Handles NASA GPM data downloads and management
 """
-
+# ============================================
+# SAFE IMPORTS FOR CLOUD DEPLOYMENT
+# ============================================
+try:
+    import xarray as xr
+    import netCDF4
+    HAS_DATA_LIBS = True
+except ImportError:
+    HAS_DATA_LIBS = False
+# ============================================
 import gpm
 import glob
 import os
