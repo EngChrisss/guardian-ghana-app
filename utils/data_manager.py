@@ -2,21 +2,30 @@
 Data Manager — Guardian Ghana
 Handles NASA GPM data downloads and management
 """
+
+import glob
+import os
+from datetime import datetime, timedelta
+
 # ============================================
 # SAFE IMPORTS FOR CLOUD DEPLOYMENT
 # ============================================
+try:
+    import gpm
+    HAS_GPM = True
+    print("✅ gpm-api loaded successfully")
+except ImportError:
+    HAS_GPM = False
+    print("⚠️ gpm-api not available - download functions disabled")
+
 try:
     import xarray as xr
     import netCDF4
     HAS_DATA_LIBS = True
 except ImportError:
     HAS_DATA_LIBS = False
+    print("⚠️ xarray/netCDF4 not available - data reading disabled")
 # ============================================
-import gpm
-import glob
-import os
-from datetime import datetime, timedelta
-import xarray as xr
 
 
 class GPMDataManager:
@@ -35,13 +44,10 @@ class GPMDataManager:
         available_dates = []
         for folder in date_folders:
             try:
-                # Extract year/month from path
                 parts = folder.split("/")
                 if len(parts) >= 8:
                     year = int(parts[-3])
                     month = int(parts[-2])
-                    day = 1  # We only store day 1 data
-                    # Check if there are files
                     files = glob.glob(f"{folder}01/*.HDF5")
                     if files:
                         available_dates.append(datetime(year, month, 1).date())
@@ -57,59 +63,18 @@ class GPMDataManager:
             return max(dates)
         return None
 
-    def get_most_recent_available_date(self):
-        """
-        Get the most recent date NASA has available.
-        This attempts to find the latest date with data.
-        """
-        # Start from today and go backwards
-        check_date = datetime.now().date()
-
-        for _ in range(365):  # Check last 365 days
-            try:
-                # Check if we can access data for this date
-                date_str = check_date.strftime("%Y/%m/%d")
-                url = f"{self.base_path}{date_str}/"
-
-                # Quick check - try to open a file
-                test_files = glob.glob(f"{self.base_path}{date_str}/*.HDF5")
-                if test_files:
-                    return check_date
-
-                # Try one more check with a small download attempt
-                # If it fails, it's not available
-                try:
-                    gpm.download(
-                        product=self.product,
-                        product_type=self.product_type,
-                        version=self.version,
-                        start_time=datetime(check_date.year, check_date.month, check_date.day, 0, 0, 0),
-                        end_time=datetime(check_date.year, check_date.month, check_date.day, 23, 59, 59),
-                        storage=self.storage,
-                        progress_bar=False
-                    )
-                    # If we get here, download worked
-                    return check_date
-                except:
-                    pass
-
-                check_date = check_date - timedelta(days=1)
-            except:
-                check_date = check_date - timedelta(days=1)
-
-        return None
-
     def download_missing_data(self, start_date=None, end_date=None):
-        """
-        Download missing data for a date range
-        """
+        """Download missing data for a date range — ONLY WORKS LOCALLY"""
+        # Skip if gpm is not available (cloud environment)
+        if not HAS_GPM:
+            print("⚠️ gpm-api not available - skipping download (cloud environment)")
+            return 0
+
         if start_date is None:
-            # Check what we have
             current_data = self.get_available_dates()
             if current_data:
                 start_date = max(current_data) + timedelta(days=1)
             else:
-                # Use September 2025 as base
                 start_date = datetime(2025, 9, 2).date()
 
         if end_date is None:
@@ -121,7 +86,6 @@ class GPMDataManager:
         current_date = start_date
 
         while current_date <= end_date:
-            # Check if we already have this date
             date_str = current_date.strftime("%Y/%m/%d")
             existing_files = glob.glob(f"{self.base_path}{date_str}/*.HDF5")
 
