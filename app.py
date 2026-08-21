@@ -9,104 +9,26 @@ import base64
 import os
 from datetime import datetime
 from utils.data_manager import data_manager
+
 # ============================================
-# NASA GPM DATA AUTO-DOWNLOAD (Cloud/First Run)
+# NASA GPM DATA CHECK (No Download)
 # ============================================
-import gpm
 import glob
-import sys
 
-def ensure_rainfall_data_exists():
-    """Download sample rainfall data if none exists (runs once on cloud)"""
-    # Data path
+def check_data_exists():
+    """Check if data exists locally (no download on cloud)"""
     data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
-    
-    # Check if data already exists
     files = glob.glob(f"{data_path}*.HDF5")
+    
     if files:
-        print(f"✅ Data already exists: {len(files)} files found")
+        print(f"✅ Data found: {len(files)} files")
         return True
-    
-    print("=" * 60)
-    print("📡 No NASA GPM data found. Attempting download...")
-    print("=" * 60)
-    
-    # Try up to 3 times
-    for attempt in range(3):
-        try:
-            print(f"\n   Attempt {attempt + 1}/3...")
-            
-            # Download the data
-            gpm.download(
-                product="IMERG-FR",
-                product_type="RS",
-                version=7,
-                start_time=datetime(2025, 9, 1, 0, 0, 0),
-                end_time=datetime(2025, 9, 1, 23, 59, 59),
-                storage="GES_DISC"
-            )
-            
-            # Verify download
-            files = glob.glob(f"{data_path}*.HDF5")
-            if files:
-                print(f"   ✅ Download successful! {len(files)} files downloaded.")
-                print("=" * 60)
-                return True
-            else:
-                print(f"   ⚠️ Download completed but no files found.")
-                
-        except Exception as e:
-            print(f"   ❌ Attempt {attempt + 1} failed: {str(e)[:100]}...")
-            
-        # Wait before retry (except on last attempt)
-        if attempt < 2:
-            print("   ⏳ Waiting 10 seconds before retry...")
-            time.sleep(10)
-    
-    print("\n❌ All download attempts failed.")
-    print("   Dashboard will show 'No Data' until data is available.")
-    print("   You can manually upload data to GitHub to fix this.")
-    print("=" * 60)
-    return False
+    else:
+        print("⚠️ No data found. Please run auto_download.py locally.")
+        return False
 
-# Run the data check
-data_available = ensure_rainfall_data_exists()
-# ============================================
-
-# Run the data check
-data_available = ensure_rainfall_data_exists()
-# ============================================
-
-# ============================================
-# CHECK FOR NEW NASA DATA (Auto-Download)
-# ============================================
-def check_for_new_data():
-    """Check if new NASA data is available and download it"""
-    try:
-        from utils.data_manager import data_manager
-        from datetime import timedelta
-        
-        most_recent_local = data_manager.get_most_recent_local_date()
-        most_recent_available = data_manager.get_most_recent_available_date()
-        
-        if most_recent_local and most_recent_available:
-            if most_recent_available > most_recent_local:
-                print(f"📡 New data available! ({most_recent_local} → {most_recent_available})")
-                data_manager.download_missing_data(
-                    start_date=most_recent_local + timedelta(days=1),
-                    end_date=most_recent_available
-                )
-            else:
-                print(f"✅ Data is up to date ({most_recent_local})")
-        else:
-            print("📡 Checking for initial data...")
-            data_manager.download_missing_data()
-            
-    except Exception as e:
-        print(f"⚠️ Data check error: {e}")
-
-# Run the check
-check_for_new_data()
+# Run the check (no download!)
+data_available = check_data_exists()
 # ============================================
 
 ADMIN_PASSWORD = "M.P.139.23-24"
@@ -124,9 +46,6 @@ if "authenticated" not in st.session_state:
     st.session_state.client_type = ""
     st.session_state.access_time = None
     st.session_state.failed_attempts = 0
-
-# ... REST OF YOUR APP CODE CONTINUES HERE ...
-# (Keep everything else the same - your existing imports, login, metrics, etc.)
 
 # Initialize new session state variables for security features
 if "show_mining_portal" not in st.session_state:
