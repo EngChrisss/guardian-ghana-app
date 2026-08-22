@@ -15,6 +15,47 @@ from utils.data_manager import data_manager
 # ============================================
 import glob
 
+import os
+import glob
+
+# ============================================
+# 🔍 DEBUG: Check where files are on cloud
+# ============================================
+print("=" * 60)
+print("🔍 FILE PATH DEBUG")
+print("=" * 60)
+
+# Where am I?
+print(f"Current directory: {os.getcwd()}")
+
+# What files exist in data/
+data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
+print(f"Looking for files in: {data_path}")
+
+files = glob.glob(f"{data_path}*.HDF5")
+print(f"Files found: {len(files)}")
+
+if files:
+    for f in files[:3]:
+        print(f"  ✅ {f}")
+else:
+    print("  ❌ No files found")
+
+    # Check if data folder exists at all
+    if os.path.exists("./data/"):
+        print("  ✅ ./data/ exists")
+        # List what's in data/
+        data_contents = os.listdir("./data/")
+        print(f"  Contents of ./data/: {data_contents}")
+    else:
+        print("  ❌ ./data/ does NOT exist")
+
+        # Check parent directories
+        print(f"  Contents of ./: {os.listdir('./')[:10]}")
+print("=" * 60)
+
+
+# ============================================
 
 def check_data_exists():
     """Check if data exists locally (no download on cloud)"""
