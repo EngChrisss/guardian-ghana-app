@@ -1,3 +1,32 @@
+import os
+import sys
+import glob
+
+print("=" * 60)
+print("🚨 FORCED DEBUG - APP STARTING")
+print("=" * 60)
+print(f"Current working directory: {os.getcwd()}")
+print(f"Python version: {sys.version}")
+print(f"Files in current directory: {os.listdir('.')[:10]}")
+print("=" * 60)
+
+# Check for data
+data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
+print(f"Looking for: {data_path}")
+files = glob.glob(f"{data_path}*.HDF5")
+print(f"HDF5 files found: {len(files)}")
+
+if files:
+    for f in files[:5]:
+        print(f"  ✅ {f}")
+else:
+    print("  ❌ No HDF5 files found")
+    print(f"  Does ./data/ exist? {os.path.exists('./data/')}")
+    if os.path.exists("./data/"):
+        print(f"  Contents of ./data/: {os.listdir('./data/')[:10]}")
+print("=" * 60)
+
+
 import streamlit as st
 import pandas as pd
 import datetime as dt
@@ -14,48 +43,6 @@ from utils.data_manager import data_manager
 # NASA GPM DATA CHECK (No Download)
 # ============================================
 import glob
-
-import os
-import glob
-
-# ============================================
-# 🔍 DEBUG: Check where files are on cloud
-# ============================================
-print("=" * 60)
-print("🔍 FILE PATH DEBUG")
-print("=" * 60)
-
-# Where am I?
-print(f"Current directory: {os.getcwd()}")
-
-# What files exist in data/
-data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
-print(f"Looking for files in: {data_path}")
-
-files = glob.glob(f"{data_path}*.HDF5")
-print(f"Files found: {len(files)}")
-
-if files:
-    for f in files[:3]:
-        print(f"  ✅ {f}")
-else:
-    print("  ❌ No files found")
-
-    # Check if data folder exists at all
-    if os.path.exists("./data/"):
-        print("  ✅ ./data/ exists")
-        # List what's in data/
-        data_contents = os.listdir("./data/")
-        print(f"  Contents of ./data/: {data_contents}")
-    else:
-        print("  ❌ ./data/ does NOT exist")
-
-        # Check parent directories
-        print(f"  Contents of ./: {os.listdir('./')[:10]}")
-print("=" * 60)
-
-
-# ============================================
 
 def check_data_exists():
     """Check if data exists locally (no download on cloud)"""
