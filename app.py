@@ -44,22 +44,32 @@ from utils.data_manager import data_manager
 # ============================================
 import glob
 
+
 def check_data_exists():
     """Check if data exists locally (no download on cloud)"""
-    data_path = "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/"
-    files = glob.glob(f"{data_path}*.HDF5")
+    import os
+    import glob
 
-    if files:
-        print(f"✅ Data found: {len(files)} files")
-        return True
-    else:
-        print("⚠️ No data found. Please run auto_download.py locally.")
-        return False
+    # Try multiple possible paths
+    paths_to_check = [
+        "./data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/",
+        "/mount/src/guardian-ghana-app/data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/",
+        "data/GPM/RS/V07/IMERG/IMERG-FR/2025/09/01/",
+        os.path.join(os.path.dirname(__file__), "data", "GPM", "RS", "V07", "IMERG", "IMERG-FR", "2025", "09",
+                     "01") + "/"
+    ]
 
+    for path in paths_to_check:
+        print(f"Checking path: {path}")
+        files = glob.glob(f"{path}*.HDF5")
+        if files:
+            print(f"✅ Data found at: {path} ({len(files)} files)")
+            return True
+        else:
+            print(f"   ❌ No files at: {path}")
 
-# Run the check (no download!)
-data_available = check_data_exists()
-# ============================================
+    print("⚠️ No data found in any path")
+    return False
 
 ADMIN_PASSWORD = "M.P.139.23-24"
 
