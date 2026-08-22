@@ -987,7 +987,7 @@ st.sidebar.markdown("---")
 st.sidebar.header("📊 Model Validation")
 
 try:
-    from data.validation_data import validate_predictions, HISTORICAL_EVENTS, calculate_distance
+    from validation_data import validate_predictions, HISTORICAL_EVENTS, calculate_distance
 except ImportError:
     st.sidebar.warning("Validation module not available")
 
