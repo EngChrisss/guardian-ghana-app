@@ -119,7 +119,7 @@ if "live_data_df" not in st.session_state:
     st.session_state.live_data_df = None
 
 from utils.enterprise_features import enterprise_dashboard, revenue_calculator
-from data.sample_data import generate_sample_data, get_water_quality_status
+from sample_data import generate_sample_data, get_water_quality_status
 from utils.map_helper import create_ghana_water_map, display_map, create_risk_overlay_map
 from utils.alert_system import check_and_alert, TelegramAlertSystem
 from utils.prediction_engine import predictor

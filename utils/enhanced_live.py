@@ -6,7 +6,7 @@ import pandas as pd
 import random
 from datetime import datetime, timedelta
 import time
-from data.sample_data import generate_sample_data, get_water_quality_status
+from sample_data import generate_sample_data, get_water_quality_status
 
 
 class EnhancedLiveSystem:
