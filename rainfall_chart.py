@@ -27,39 +27,59 @@ def display_rainfall_chart():
     # Extract time as string for better display
     df['time_str'] = df['time'].apply(lambda x: str(x)[11:16])
 
-    # Create the chart
-    fig = px.bar(
-        df,
-        x='time_str',
-        y='avg_rainfall',
-        title=f"Rainfall on {date.strftime('%B %d, %Y')} — Ankobra Basin",
-        labels={
-            'time_str': 'Time (UTC)',
-            'avg_rainfall': 'Rainfall (mm/hr)'
-        },
-        color='avg_rainfall',
-        color_continuous_scale='Blues',
-        height=400
-    )
+    # Check if all values are zero
+    if df['avg_rainfall'].sum() == 0:
+        st.info("ℹ️ No rainfall recorded on this day (0.0 mm)")
+        # Show empty chart with message
+        fig = px.bar(
+            df,
+            x='time_str',
+            y='avg_rainfall',
+            title=f"Rainfall on {date.strftime('%B %d, %Y')} — Ankobra Basin",
+            labels={
+                'time_str': 'Time (UTC)',
+                'avg_rainfall': 'Rainfall (mm/hr)'
+            },
+            height=400
+        )
+        fig.update_layout(
+            xaxis_tickangle=-45,
+            showlegend=False,
+            margin=dict(l=40, r=40, t=60, b=80)
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        # Create the chart with color
+        fig = px.bar(
+            df,
+            x='time_str',
+            y='avg_rainfall',
+            title=f"Rainfall on {date.strftime('%B %d, %Y')} — Ankobra Basin",
+            labels={
+                'time_str': 'Time (UTC)',
+                'avg_rainfall': 'Rainfall (mm/hr)'
+            },
+            color='avg_rainfall',
+            color_continuous_scale='Blues',
+            height=400
+        )
 
-    # Add a line for average
-    avg_rain = df['avg_rainfall'].mean()
-    fig.add_hline(
-        y=avg_rain,
-        line_dash="dash",
-        line_color="red",
-        annotation_text=f"Avg: {avg_rain:.2f} mm/hr"
-    )
+        # Add a line for average
+        avg_rain = df['avg_rainfall'].mean()
+        fig.add_hline(
+            y=avg_rain,
+            line_dash="dash",
+            line_color="red",
+            annotation_text=f"Avg: {avg_rain:.2f} mm/hr"
+        )
 
-    # Update layout
-    fig.update_layout(
-        xaxis_tickangle=-45,
-        showlegend=False,
-        margin=dict(l=40, r=40, t=60, b=80)
-    )
+        fig.update_layout(
+            xaxis_tickangle=-45,
+            showlegend=False,
+            margin=dict(l=40, r=40, t=60, b=80)
+        )
 
-    # Display
-    st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
     # Show stats
     col1, col2, col3 = st.columns(3)
